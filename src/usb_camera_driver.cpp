@@ -38,7 +38,7 @@ CameraDriver::CameraDriver(const rclcpp::NodeOptions &node_options) : Node("usb_
 
     image_width_ = this->declare_parameter("image_width", 1280);
     image_height_ = this->declare_parameter("image_height", 720);
-    fps_ = this->declare_parameter("fps", 10.0);
+    fps_ = this->declare_parameter("fps", 60.0);
 
     camera_id = this->declare_parameter("camera_id", 0);
 
@@ -52,6 +52,8 @@ CameraDriver::CameraDriver(const rclcpp::NodeOptions &node_options) : Node("usb_
     cinfo_manager_->loadCameraInfo(camera_calibration_file_param_);
 
     cap.open(camera_id);
+    cap.set(cv::CAP_PROP_FPS, (int)fps_);
+    cap.set(cv::CAP_PROP_FOURCC, CV_FOURCC('M', 'J', 'P', 'G'));
     cap.set(cv::CAP_PROP_FRAME_WIDTH, image_width_);
     cap.set(cv::CAP_PROP_FRAME_HEIGHT, image_height_);
 
@@ -109,8 +111,7 @@ void CameraDriver::ImageCallback()
 
     auto now = std::chrono::steady_clock::now();
 
-    if (!frame.empty() &&
-        std::chrono::duration_cast<std::chrono::milliseconds>(now - last_frame_).count() > 1/fps_*1000)
+    if (!frame.empty())
     {
         last_frame_ = now;
 
